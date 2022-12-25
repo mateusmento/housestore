@@ -54,6 +54,14 @@ app.listen(3004);
     app.get("/sales", (req, res) => res.json(sales));
 
     app.post("/sales", (req, res) => {
+        const product = products.find(p => p.id === req.body.productId);
+        if (product.quantity < req.body.quantity) {
+            res.status(400);
+            return res.json({
+                status: 400,
+                message: "Unavailable product quantity for sale"
+            });
+        }
         const newSale = {
             id: 1 + sales.reduce((id, s) => id + s.id, 0),
             product: products.find(p => p.id === req.body.productId),
