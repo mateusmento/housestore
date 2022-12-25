@@ -12,7 +12,8 @@ app.listen(3003);
 (async() => {
     const connection = await amqp.connect("amqp://localhost:5672");
     const channel = await connection.createChannel();
-    await channel.assertExchange("pricing", "topic");
+    const PRICING_EXCHANGE = "pricing";
+    await channel.assertExchange(PRICING_EXCHANGE, "topic");
 
     const products = [];
     const purchases = [];
@@ -39,7 +40,7 @@ app.listen(3003);
                 cost: purchase.cost,
             };
             purchases.push(newPurchase);
-            product.price = calculatePrice(product);
+            calculatePrice(product);
         }, { noAck: true });
     })();
 
@@ -48,14 +49,14 @@ app.listen(3003);
     app.put("/products/:id/profit-margin", (req, res) => {
         const product = findProductById(+req.params.id);
         product.profitMargin = req.body.profitMargin;
-        product.price = calculatePrice(product);
+        calculatePrice(product);
         res.json(product);
     });
 
     app.put("/products/:id/taxes", (req, res) => {
         const product = findProductById(+req.params.id);
         product.taxes = req.body.taxes;
-        product.price = calculatePrice(product);
+        calculatePrice(product);
         res.json(product);
     });
 
@@ -67,7 +68,8 @@ app.listen(3003);
 
     function calculatePrice(product) {
         const productPurchases = purchases.filter(p => p.product.id === product.id);
-        return averagePrice(product, productPurchases)
+        product.price = averagePrice(product, productPurchases);
+        channel.publish(PRICING_EXCHANGE, "product.price-calculated", Buffer.from(JSON.stringify(product)));
     }
 
     function averagePrice(product, purchases) {
