@@ -25,5 +25,16 @@ app.listen(3002);
         }, { noAck: false });
     })();
 
+    (async() => {
+        const { queue } = channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, "purchasing", "product.purchased");
+        channel.consume(queue, (msg) => {
+            const purchase = JSON.parse(msg.content.toString());
+            const product = products.find(p => p.id === purchase.product.id);
+            if (!product) return;
+            product.quantity += purchase.quantity;
+        }, { noAck: false });
+    })();
+
     app.get("/products", (req, res) => res.json(products));
 })();
