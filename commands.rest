@@ -2,6 +2,7 @@
 @purchasing=http://localhost:3001
 @inventory=http://localhost:3002
 @pricing=http://localhost:3003
+@sales=http://localhost:3004
 
 ###
 
@@ -18,6 +19,10 @@ GET {{inventory}}/products
 ###
 
 GET {{pricing}}/products
+
+###
+
+GET {{sales}}/products
 
 ###
 
@@ -46,7 +51,7 @@ Content-Type: application/json; charset=utf-8
 POST {{purchasing}}/products/1/purchases
 Content-Type: application/json; charset=utf-8
 
-{ "quantity": 2, "cost": 20 }
+{ "quantity": 1, "cost": 30 }
 
 ###
 
