@@ -24,4 +24,6 @@ app.listen(3002);
             products.push({ id });
         }, { noAck: false });
     })();
+
+    app.get("/products", (req, res) => res.json(products));
 })();
