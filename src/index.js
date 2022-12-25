@@ -47,7 +47,8 @@ app.listen(3001);
         const newPurchase = {
             id: 1 + purchases.reduce((id, p) => Math.max(id, p.id), 0),
             product,
-            quantity: req.body.quantity
+            quantity: req.body.quantity,
+            cost: req.body.cost
         };
         purchases.push(newPurchase);
         channel.publish(PURCHASING_EXCHANGE, "product.purchased", Buffer.from(JSON.stringify(newPurchase)));
