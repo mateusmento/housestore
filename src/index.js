@@ -31,12 +31,15 @@ app.listen(3003);
         await channel.bindQueue(queue, "purchasing", "product.purchased");
         channel.consume(queue, (msg) => {
             let purchase = JSON.parse(msg.content.toString());
+            let product = findProductById(purchase.product.id);
             let newPurchase = {
                 id: purchase.id,
-                product: findProductById(purchase.product.id),
+                product,
+                quantity: purchase.quantity,
                 cost: purchase.cost,
             };
             purchases.push(newPurchase);
+            product.price = calculatePrice(product, productPurchases);
         }, { noAck: true });
     })();
 
@@ -45,5 +48,21 @@ app.listen(3003);
 
     function findProductById(id) {
         return products.find(p => p.id === id) || null;
+    }
+
+    function calculatePrice(product) {
+        const productPurchases = purchases.filter(p => p.product.id === product.id);
+        return averagePrice(productPurchases)
+    }
+
+    function averagePrice(product, purchases) {
+        const { profitMargin, taxes } = product;
+        const totalCost = purchases
+            .map(p => (p.cost + profitMargin + taxes) * p.quantity)
+            .reduce((a, b) => a + b);
+        const totalQuantity = purchases
+            .map(p => p.quantity)
+            .reduce((a, b) => a + b);
+        return totalCost / totalQuantity;
     }
 })();
