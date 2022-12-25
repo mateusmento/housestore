@@ -12,7 +12,8 @@ app.listen(3000);
 (async () => {
     const connection = await amqp.connect("amqp://localhost:5672");
     const channel = await connection.createChannel();
-    const { exchange } = await channel.assertExchange("catalog", "topic");
+    const CATALOG_EXCHANGE = "catalog";
+    await channel.assertExchange(CATALOG_EXCHANGE, "topic");
 
     const products = [];
 
@@ -24,7 +25,7 @@ app.listen(3000);
             name: req.body.name
         };
         products.push(newProduct);
-        channel.publish("catalog", "product.registered", Buffer.from(JSON.stringify(newProduct)));
+        channel.publish(CATALOG_EXCHANGE, "product.registered", Buffer.from(JSON.stringify(newProduct)));
         res.json(newProduct);
     });
 })();
