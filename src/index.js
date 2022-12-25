@@ -84,6 +84,8 @@ app.listen(3002);
         if (!product) return;
         product.quantity -= amount;
         channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
+        if (product.quantity === 0)
+            channel.publish(INVENTORY_EXCHANGE, "product.inventory-is-low", Buffer.from(JSON.stringify(product)));
         return product;
     }
 })();
