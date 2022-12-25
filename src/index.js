@@ -12,9 +12,11 @@ app.listen(3004);
 (async () => {
     const connection = await amqp.connect("amqp://localhost:5672");
     const channel = await connection.createChannel();
-    await channel.assertExchange("sales");
+    const SALES_EXCHANGE = "sales";
+    await channel.assertExchange(SALES_EXCHANGE, "topic");
 
     const products = [];
+    const sales = [];
 
     (async () => {
         const { queue } = await channel.assertQueue("", { exclusive: true });
@@ -48,4 +50,15 @@ app.listen(3004);
     })();
 
     app.get("/products", (req, res) => res.json(products));
+
+    app.post("/sales", (req, res) => {
+        const newSale = {
+            id: 1 + sales.reduce((id, s) => id + s.id, 0),
+            product: products.find(p => p.id === req.body.productId),
+            quantity: req.body.quantity
+        };
+        sales.push(newSale);
+        channel.publish(SALES_EXCHANGE, "product.sold", Buffer.from(JSON.stringify(newSale)));
+        res.json(newSale);
+    });
 })();
