@@ -29,10 +29,24 @@ GET {{purchasing}}/products/1/purchases
 
 ###
 
+PUT {{pricing}}/products/1/profit-margin
+Content-Type: application/json; charset=utf-8
+
+{ "profitMargin": 20 }
+
+###
+
+PUT {{pricing}}/products/1/taxes
+Content-Type: application/json; charset=utf-8
+
+{ "taxes": 10 }
+
+###
+
 POST {{purchasing}}/products/1/purchases
 Content-Type: application/json; charset=utf-8
 
-{ "quantity": 2 }
+{ "quantity": 2, "cost": 20 }
 
 ###
 
