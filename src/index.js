@@ -38,9 +38,9 @@ app.listen(3003);
             };
             purchases.push(newPurchase);
         }, { noAck: true });
-    });
+    })();
 
     function findProductById(id) {
         return products.find(p => p.id === id) || null;
     }
-});
+})();
