@@ -14,6 +14,7 @@ app.listen(3002);
     const channel = await connection.createChannel();
     const INVENTORY_EXCHANGE = "inventory";
     await channel.assertExchange(INVENTORY_EXCHANGE, "topic");
+    await channel.assertExchange("sales", "topic");
 
     const products = [];
 
@@ -27,11 +28,20 @@ app.listen(3002);
     })();
 
     (async() => {
-        const { queue } = channel.assertQueue("", { exclusive: true });
+        const { queue } = await channel.assertQueue("", { exclusive: true });
         await channel.bindQueue(queue, "purchasing", "product.purchased");
         channel.consume(queue, (msg) => {
             const purchase = JSON.parse(msg.content.toString());
             increaseInventory(purchase.product.id, purchase.quantity);
+        }, { noAck: false });
+    })();
+
+    (async() => {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, "sales", "product.sold");
+        channel.consume(queue, (msg) => {
+            const sale = JSON.parse(msg.content.toString());
+            decreaseInventory(sale.product.id, sale.quantity);
         }, { noAck: false });
     })();
 
@@ -53,6 +63,14 @@ app.listen(3002);
         const product = products.find(p => p.id === productId);
         if (!product) return;
         product.quantity += amount;
+        channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
+        return product;
+    }
+
+    function decreaseInventory(productId, amount) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        product.quantity -= amount;
         channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
         return product;
     }
