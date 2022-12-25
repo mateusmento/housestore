@@ -20,7 +20,7 @@ app.listen(3000);
 
     app.post("/products", async (req, res) => {
         const newProduct = {
-            id: products.reduce((id, p) => Math.max(id, p.id), 0),
+            id: 1 + products.reduce((id, p) => Math.max(id, p.id), 0),
             name: req.body.name
         };
         products.push(newProduct);
