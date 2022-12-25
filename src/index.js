@@ -30,6 +30,10 @@ app.listen(3001);
 
     const purchases = [];
 
+    app.get("/products/:id/purchases", (req, res) => {
+        return res.json(purchases.filter(p => p.product.id === req.params.id));
+    });
+
     app.post("/products/:id/purchases", (req, res) => {
         const productId = req.params.id;
         const product = products.find(p => p.id === productId)
