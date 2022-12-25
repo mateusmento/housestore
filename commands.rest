@@ -11,6 +11,17 @@ GET {{purchasing}}/products
 
 ###
 
+GET {{purchasing}}/products/1/purchases
+
+###
+
+POST {{purchasing}}/products/1/purchases
+Content-Type: application/json; charset=utf-8
+
+{ "quantity": 2 }
+
+###
+
 POST {{catalog}}/products
 Content-Type: application/json; charset=utf-8
 
