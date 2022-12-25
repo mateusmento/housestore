@@ -44,6 +44,21 @@ app.listen(3003);
     })();
 
     app.get("/products", (req, res) => res.json(products));
+
+    app.put("/products/:id/profit-margin", (req, res) => {
+        const product = findProductById(+req.params.id);
+        product.profitMargin = req.body.profitMargin;
+        product.price = calculatePrice(product);
+        res.json(product);
+    });
+
+    app.put("/products/:id/taxes", (req, res) => {
+        const product = findProductById(+req.params.id);
+        product.taxes = req.body.taxes;
+        product.price = calculatePrice(product);
+        res.json(product);
+    });
+
     app.get("/purchases", (req, res) => res.json(purchases));
 
     function findProductById(id) {
