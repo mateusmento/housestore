@@ -14,6 +14,7 @@ app.listen(3001);
     const channel = await connection.createChannel();
     const PURCHASING_EXCHANGE = "purchasing";
     await channel.assertExchange(PURCHASING_EXCHANGE, "topic");
+    await channel.assertExchange("inventory", "topic");
 
     const products = [];
 
