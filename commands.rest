@@ -6,19 +6,18 @@
 
 ###
 
-GET {{catalog}}/products
+POST {{catalog}}/products
+Content-Type: application/json; charset=utf-8
+
+{ "name": "Product 1" }
 
 ###
 
-GET {{purchasing}}/products
+POST {{purchasing}}/products/1/purchases
+Content-Type: application/json; charset=utf-8
 
-###
+{ "quantity": 2, "cost": 20 }
 
-GET {{inventory}}/products
-
-###
-
-GET {{pricing}}/products
 
 ###
 
@@ -26,11 +25,18 @@ GET {{sales}}/products
 
 ###
 
-GET {{pricing}}/purchases
+POST {{sales}}/sales
+Content-Type: application/json; charset=utf-8
+
+{ "productId": 1, "quantity": 2 }
 
 ###
 
-GET {{purchasing}}/products/1/purchases
+GET {{sales}}/sales
+
+###
+
+GET {{inventory}}/products
 
 ###
 
@@ -48,35 +54,27 @@ Content-Type: application/json; charset=utf-8
 
 ###
 
-POST {{purchasing}}/products/1/purchases
-Content-Type: application/json; charset=utf-8
-
-{ "quantity": 1, "cost": 30 }
-
-###
-
-PUT {{inventory}}/products/2/increase-quantity
+PUT {{inventory}}/products/1/increase-quantity
 Content-Type: application/json; charset=utf-8
 
 { "amount": 1 }
 
 ###
 
-POST {{catalog}}/products
-Content-Type: application/json; charset=utf-8
-
-{ "name": "Product 1" }
+GET {{pricing}}/purchases
 
 ###
 
-POST {{catalog}}/products
-Content-Type: application/json; charset=utf-8
-
-{ "name": "Product 2" }
+GET {{pricing}}/products
 
 ###
 
-POST {{catalog}}/products
-Content-Type: application/json; charset=utf-8
+GET {{purchasing}}/products/1/purchases
 
-{ "name": "Product 3" }
+###
+
+GET {{catalog}}/products
+
+###
+
+GET {{purchasing}}/products
