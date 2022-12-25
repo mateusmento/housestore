@@ -40,6 +40,9 @@ app.listen(3003);
         }, { noAck: true });
     })();
 
+    app.get("/products", (req, res) => res.json(products));
+    app.get("/purchases", (req, res) => res.json(purchases));
+
     function findProductById(id) {
         return products.find(p => p.id === id) || null;
     }
