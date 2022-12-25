@@ -51,6 +51,8 @@ app.listen(3004);
 
     app.get("/products", (req, res) => res.json(products));
 
+    app.get("/sales", (req, res) => res.json(sales));
+
     app.post("/sales", (req, res) => {
         const newSale = {
             id: 1 + sales.reduce((id, s) => id + s.id, 0),
