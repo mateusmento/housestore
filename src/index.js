@@ -21,7 +21,7 @@ app.listen(3002);
         await channel.bindQueue(queue, "catalog", "product.registered");
         channel.consume(queue, (msg) => {
             const { id } = JSON.parse(msg.content.toString());
-            products.push({ id });
+            products.push({ id, quantity: 0 });
         }, { noAck: false });
     })();
 
