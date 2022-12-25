@@ -15,6 +15,7 @@ app.listen(3003);
     await channel.assertExchange("pricing", "topic");
 
     const products = [];
+    const purchases = [];
 
     (async() => {
         const { queue } = await channel.assertQueue("", { exclusive: true });
@@ -24,4 +25,22 @@ app.listen(3003);
             products.push({ id, price: null, profitMargin: 0, taxes: 0 });
         }, { noAck: false, });
     })();
+
+    (async() => {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, "purchasing", "product.purchased");
+        channel.consume(queue, (msg) => {
+            let purchase = JSON.parse(msg.content.toString());
+            let newPurchase = {
+                id: purchase.id,
+                product: findProductById(purchase.product.id),
+                cost: purchase.cost,
+            };
+            purchases.push(newPurchase);
+        }, { noAck: true });
+    });
+
+    function findProductById(id) {
+        return products.find(p => p.id === id) || null;
+    }
 });
