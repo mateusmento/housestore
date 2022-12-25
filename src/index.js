@@ -12,7 +12,8 @@ app.listen(3002);
 (async() => {
     const connection = await amqp.connect("amqp://localhost:5672");
     const channel = await connection.createChannel();
-    await channel.assertExchange("inventory", "topic");
+    const INVENTORY_EXCHANGE = "inventory";
+    await channel.assertExchange(INVENTORY_EXCHANGE, "topic");
 
     const products = [];
 
@@ -52,6 +53,7 @@ app.listen(3002);
         const product = products.find(p => p.id === productId);
         if (!product) return;
         product.quantity += amount;
+        channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
         return product;
     }
 })();
