@@ -39,7 +39,7 @@ app.listen(3003);
                 cost: purchase.cost,
             };
             purchases.push(newPurchase);
-            product.price = calculatePrice(product, productPurchases);
+            product.price = calculatePrice(product);
         }, { noAck: true });
     })();
 
@@ -67,7 +67,7 @@ app.listen(3003);
 
     function calculatePrice(product) {
         const productPurchases = purchases.filter(p => p.product.id === product.id);
-        return averagePrice(productPurchases)
+        return averagePrice(product, productPurchases)
     }
 
     function averagePrice(product, purchases) {
