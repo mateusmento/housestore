@@ -12,7 +12,8 @@ app.listen(3001);
 (async () => {
     const connection = await amqp.connect("amqp://localhost:5672");
     const channel = await connection.createChannel();
-    const { exchange } = await channel.assertExchange("purchasing", "topic");
+    const PURCHASING_EXCHANGE = "purchasing";
+    await channel.assertExchange(PURCHASING_EXCHANGE, "topic");
 
     const products = [];
 
@@ -26,4 +27,26 @@ app.listen(3001);
     })();
 
     app.get("/products", (req, res) => res.json(products));
+
+    const purchases = [];
+
+    app.post("/products/:id/purchases", (req, res) => {
+        const productId = req.params.id;
+        const product = products.find(p => p.id === productId)
+        if (!product) {
+            res.status(404);
+            return res.json({
+                status: 404,
+                message: "Product not found"
+            });
+        }
+        const newPurchase = {
+            id: 1 + purchases.reduce((id, p) => Math.max(id, p.id), 0),
+            product,
+            quantity: req.body.quantity
+        };
+        purchases.push(newPurchase);
+        channel.publish(PURCHASING_EXCHANGE, "product.purchased", Buffer.from(JSON.stringify(newPurchase)));
+        res.json(newPurchase);
+    });
 })();
