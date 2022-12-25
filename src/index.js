@@ -43,7 +43,7 @@ app.listen(3004);
             let { id, price } = JSON.parse(msg.content.toString());
             let product = products.find(p => p.id === id);
             if (!product) return;
-            product.quantity = price;
+            product.price = price;
         }, { noAck: false });
     })();
 
