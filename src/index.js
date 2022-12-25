@@ -18,7 +18,7 @@ app.listen(3001);
 
     (async () => {
         const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, exchange, "product-registered");
+        await channel.bindQueue(queue, exchange, "product.registered");
         channel.consume(queue, (msg) => {
             const { id } = JSON.parse(msg.content.toString());
             products.push({ id });
