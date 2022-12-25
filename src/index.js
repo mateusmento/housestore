@@ -26,6 +26,18 @@ app.listen(3001);
         }, { noAck: false });
     })();
 
+    (async () => {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, "inventory", "product.inventory-is-low");
+        channel.consume(queue, (msg) => {
+            const { id } = JSON.parse(msg.content.toString());
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            // TODO: Use vendors to determine the cost and use extra configuration for the quantity
+            purchaseProduct(product, 2, 20);
+        }, { noAck: false });
+    })();
+
     app.get("/products", (req, res) => res.json(products));
 
     const purchases = [];
@@ -44,14 +56,19 @@ app.listen(3001);
                 message: "Product not found"
             });
         }
+        const purchase = purchaseProduct(product, req.body.quantity, req.body.cost);
+        res.json(purchase);
+    });
+
+    function purchaseProduct(product, quantity, cost) {
         const newPurchase = {
             id: 1 + purchases.reduce((id, p) => Math.max(id, p.id), 0),
             product,
-            quantity: req.body.quantity,
-            cost: req.body.cost
+            quantity,
+            cost
         };
         purchases.push(newPurchase);
         channel.publish(PURCHASING_EXCHANGE, "product.purchased", Buffer.from(JSON.stringify(newPurchase)));
-        res.json(newPurchase);
-    });
+        return newPurchase;
+    }
 })();
