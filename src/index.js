@@ -36,5 +36,16 @@ app.listen(3004);
         }, { noAck: false });
     })();
 
+    (async () => {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, "pricing", "product.price-calculated");
+        channel.consume(queue, (msg) => {
+            let { id, price } = JSON.parse(msg.content.toString());
+            let product = products.find(p => p.id === id);
+            if (!product) return;
+            product.quantity = price;
+        }, { noAck: false });
+    })();
+
     app.get("/products", (req, res) => res.json(products));
 })();
