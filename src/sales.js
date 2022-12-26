@@ -71,4 +71,17 @@ app.listen(3004);
         channel.publish(SALES_EXCHANGE, "product.sold", Buffer.from(JSON.stringify(newSale)));
         res.json(newSale);
     });
+
+    async function consumeFrom(exchange, route, consume) {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, exchange, route);
+        channel.consume(queue, (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            consume(content);
+        }, { noAck: false });
+    }
+
+    function publishInSales(route, content) {
+        return channel.publish(SALES_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
+    }
 })();
