@@ -65,7 +65,7 @@ app.listen(3002);
         const product = findProductById(productId);
         if (!product) return;
         product.quantity += amount;
-        channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
+        publishInInventory("product.inventory-adjusted", product);
         return product;
     }
 
@@ -73,9 +73,9 @@ app.listen(3002);
         const product = findProductById(productId);
         if (!product) return;
         product.quantity -= amount;
-        channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
+        publishInInventory("product.inventory-adjusted", product);
         if (product.quantity === 0)
-            channel.publish(INVENTORY_EXCHANGE, "product.inventory-is-low", Buffer.from(JSON.stringify(product)));
+            publishInInventory("product.inventory-is-low", product);
         return product;
     }
 
@@ -87,5 +87,10 @@ app.listen(3002);
         res.status(status);
         return res.json({status, message});
     }
+
+    function publishInInventory(route, content) {
+        channel.publish(INVENTORY_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
+    }
+
 })();
 
