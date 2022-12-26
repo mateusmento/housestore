@@ -18,36 +18,21 @@ app.listen(3004);
     const products = [];
     const sales = [];
 
-    (async () => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "catalog", "product.registered");
-        channel.consume(queue, (msg) => {
-            let { id } = JSON.parse(msg.content.toString());
-            products.push({ id });
-        }, { noAck: false });
-    })();
+    consumeFrom("catalog", "product.registered", ({ id }) => {
+        products.push({ id });
+    });
 
-    (async () => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "inventory", "product.inventory-adjusted");
-        channel.consume(queue, (msg) => {
-            let { id, quantity } = JSON.parse(msg.content.toString());
-            let product = products.find(p => p.id === id);
-            if (!product) return;
-            product.quantity = quantity;
-        }, { noAck: false });
-    })();
+    consumeFrom("inventory", "product.inventory-adjusted", ({ id, quantity }) => {
+        let product = products.find(p => p.id === id);
+        if (!product) return;
+        product.quantity = quantity;
+    });
 
-    (async () => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "pricing", "product.price-calculated");
-        channel.consume(queue, (msg) => {
-            let { id, price } = JSON.parse(msg.content.toString());
-            let product = products.find(p => p.id === id);
-            if (!product) return;
-            product.price = price;
-        }, { noAck: false });
-    })();
+    consumeFrom("pricing", "product.price-calculated", ({ id, price }) => {
+        let product = products.find(p => p.id === id);
+        if (!product) return;
+        product.price = price;
+    });
 
     app.get("/products", (req, res) => res.json(products));
 
