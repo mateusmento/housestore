@@ -18,31 +18,22 @@ app.listen(3003);
     const products = [];
     const purchases = [];
 
-    (async() => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "catalog", "product.registered");
-        channel.consume(queue, (msg) => {
-            let { id } = JSON.parse(msg.content.toString());
-            products.push({ id, price: null, profitMargin: 0, taxes: 0 });
-        }, { noAck: false, });
-    })();
+    consumeFrom("catalog", "product.registered", ({ id }) => {
+        products.push({ id, price: null, profitMargin: 0, taxes: 0 });
+    });
 
-    (async() => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "purchasing", "product.purchased");
-        channel.consume(queue, (msg) => {
-            let purchase = JSON.parse(msg.content.toString());
-            let product = findProductById(purchase.product.id);
-            let newPurchase = {
-                id: purchase.id,
-                product,
-                quantity: purchase.quantity,
-                cost: purchase.cost,
-            };
-            purchases.push(newPurchase);
-            calculatePrice(product);
-        }, { noAck: true });
-    })();
+    consumeFrom("purchasing", "product.purchased", (msg) => {
+        let purchase = JSON.parse(msg.content.toString());
+        let product = findProductById(purchase.product.id);
+        let newPurchase = {
+            id: purchase.id,
+            product,
+            quantity: purchase.quantity,
+            cost: purchase.cost,
+        };
+        purchases.push(newPurchase);
+        calculatePrice(product);
+    });
 
     app.get("/products", (req, res) => res.json(products));
 
@@ -81,5 +72,14 @@ app.listen(3003);
             .map(p => p.quantity)
             .reduce((a, b) => a + b);
         return totalCost / totalQuantity;
+    }
+
+    async function consumeFrom(exchange, route, consume) {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, exchange, route);
+        channel.consume(queue, (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            consume(content);
+        }, { noAck: false });
     }
 })();
