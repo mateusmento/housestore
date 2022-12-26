@@ -32,7 +32,7 @@ app.listen(3001);
         await channel.bindQueue(queue, "inventory", "product.inventory-is-low");
         channel.consume(queue, (msg) => {
             const { id } = JSON.parse(msg.content.toString());
-            const product = products.find(p => p.id === id);
+            const product = findProductById(id);
             if (!product) return;
             // TODO: Use vendors to determine the cost and use extra configuration for the quantity
             purchaseProduct(product, 2, 20);
@@ -49,7 +49,7 @@ app.listen(3001);
 
     app.post("/products/:id/purchases", (req, res) => {
         const productId = +req.params.id;
-        const product = products.find(p => p.id === productId);
+        const product = findProductById(productId);
         if (!product) {
             res.status(404);
             return res.json({
@@ -71,5 +71,9 @@ app.listen(3001);
         purchases.push(newPurchase);
         channel.publish(PURCHASING_EXCHANGE, "product.purchased", Buffer.from(JSON.stringify(newPurchase)));
         return newPurchase;
+    }
+
+    function findProductById(id) {
+        return products.find(p => p.id === id);
     }
 })();
