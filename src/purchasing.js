@@ -17,6 +17,7 @@ app.listen(3001);
     await channel.assertExchange("inventory", "topic");
 
     const products = [];
+    const purchases = [];
 
     (async () => {
         const { queue } = await channel.assertQueue("", { exclusive: true });
@@ -40,8 +41,6 @@ app.listen(3001);
     })();
 
     app.get("/products", (req, res) => res.json(products));
-
-    const purchases = [];
 
     app.get("/products/:id/purchases", (req, res) => {
         return res.json(purchases.filter(p => p.product.id === +req.params.id));
