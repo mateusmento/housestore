@@ -53,7 +53,7 @@ app.listen(3004);
             quantity: req.body.quantity
         };
         sales.push(newSale);
-        channel.publish(SALES_EXCHANGE, "product.sold", Buffer.from(JSON.stringify(newSale)));
+        publishInSales("product.sold", newSale);
         res.json(newSale);
     });
 
