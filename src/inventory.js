@@ -62,7 +62,7 @@ app.listen(3002);
     });
 
     function increaseInventory(productId, amount) {
-        const product = products.find(p => p.id === productId);
+        const product = findProductById(productId);
         if (!product) return;
         product.quantity += amount;
         channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
@@ -70,13 +70,17 @@ app.listen(3002);
     }
 
     function decreaseInventory(productId, amount) {
-        const product = products.find(p => p.id === productId);
+        const product = findProductById(productId);
         if (!product) return;
         product.quantity -= amount;
         channel.publish(INVENTORY_EXCHANGE, "product.inventory-adjusted", Buffer.from(JSON.stringify(product)));
         if (product.quantity === 0)
             channel.publish(INVENTORY_EXCHANGE, "product.inventory-is-low", Buffer.from(JSON.stringify(product)));
         return product;
+    }
+
+    function findProductById(id) {
+        return products.find(p => p.id === id);
     }
 
     function errorResponse(res, status, message) {
