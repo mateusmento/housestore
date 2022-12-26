@@ -18,32 +18,17 @@ app.listen(3002);
 
     const products = [];
 
-    (async() => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "catalog", "product.registered");
-        channel.consume(queue, (msg) => {
-            const { id } = JSON.parse(msg.content.toString());
-            products.push({ id, quantity: 0 });
-        }, { noAck: false });
-    })();
+    consumeFrom("catalog", "product.registered", ({ id }) => {
+        products.push({ id, quantity: 0 });
+    });
 
-    (async() => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "purchasing", "product.purchased");
-        channel.consume(queue, (msg) => {
-            const purchase = JSON.parse(msg.content.toString());
-            increaseInventory(purchase.product.id, purchase.quantity);
-        }, { noAck: false });
-    })();
+    consumeFrom("purchasing", "product.purchased", (purchase) => {
+        increaseInventory(purchase.product.id, purchase.quantity);
+    });
 
-    (async() => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "sales", "product.sold");
-        channel.consume(queue, (msg) => {
-            const sale = JSON.parse(msg.content.toString());
-            decreaseInventory(sale.product.id, sale.quantity);
-        }, { noAck: false });
-    })();
+    consumeFrom("sales", "product.sold", (sale) => {
+        decreaseInventory(sale.product.id, sale.quantity);
+    });
 
     app.get("/products", (req, res) => res.json(products));
 
@@ -92,5 +77,13 @@ app.listen(3002);
         channel.publish(INVENTORY_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
     }
 
+    async function consumeFrom(exchange, route, consume) {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, exchange, route);
+        channel.consume(queue, (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            consume(content);
+        }, { noAck: false });
+    }
 })();
 
