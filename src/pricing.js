@@ -22,8 +22,7 @@ app.listen(3003);
         products.push({ id, price: null, profitMargin: 0, taxes: 0 });
     });
 
-    consumeFrom("purchasing", "product.purchased", (msg) => {
-        let purchase = JSON.parse(msg.content.toString());
+    consumeFrom("purchasing", "product.purchased", (purchase) => {
         let product = findProductById(purchase.product.id);
         let newPurchase = {
             id: purchase.id,
