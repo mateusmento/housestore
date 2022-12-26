@@ -19,26 +19,16 @@ app.listen(3001);
     const products = [];
     const purchases = [];
 
-    (async () => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "catalog", "product.registered");
-        channel.consume(queue, (msg) => {
-            const { id } = JSON.parse(msg.content.toString());
-            products.push({ id });
-        }, { noAck: false });
-    })();
+    consumeFrom("catalog", "product.registered", ({ id }) => {
+        products.push({ id });
+    });
 
-    (async () => {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
-        await channel.bindQueue(queue, "inventory", "product.inventory-is-low");
-        channel.consume(queue, (msg) => {
-            const { id } = JSON.parse(msg.content.toString());
-            const product = findProductById(id);
-            if (!product) return;
-            // TODO: Use vendors to determine the cost and use extra configuration for the quantity
-            purchaseProduct(product, 2, 20);
-        }, { noAck: false });
-    })();
+    consumeFrom("inventory", "product.inventory-is-low", ({ id }) => {
+        const product = findProductById(id);
+        if (!product) return;
+        // TODO: Use vendors to determine the cost and use extra configuration for the quantity
+        purchaseProduct(product, 2, 20);
+    });
 
     app.get("/products", (req, res) => res.json(products));
 
@@ -68,11 +58,24 @@ app.listen(3001);
             cost
         };
         purchases.push(newPurchase);
-        channel.publish(PURCHASING_EXCHANGE, "product.purchased", Buffer.from(JSON.stringify(newPurchase)));
+        publishInPurchasing("product.purchased", newPurchase);
         return newPurchase;
     }
 
     function findProductById(id) {
         return products.find(p => p.id === id);
+    }
+
+    async function consumeFrom(exchange, route, consume) {
+        const { queue } = await channel.assertQueue("", { exclusive: true });
+        await channel.bindQueue(queue, exchange, route);
+        channel.consume(queue, (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            consume(content);
+        }, { noAck: false });
+    }
+
+    function publishInPurchasing(route, content) {
+        return channel.publish(PURCHASING_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
     }
 })();
