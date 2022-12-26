@@ -49,25 +49,15 @@ app.listen(3002);
 
     app.put("/products/:id/increase-quantity", (req, res) => {
         const product = increaseInventory(+req.params.id, req.body.amount);
-        if (!product) {
-            res.status(404);
-            return res.json({
-                status: 404,
-                message: "Product not found"
-            });
-        }
+        if (!product)
+            return errorResponse(404, "Product not found");
         res.json(product);
     });
 
     app.put("/products/:id/decrease-quantity", (req, res) => {
         const product = decreaseInventory(+req.params.id, req.body.amount);
-        if (!product) {
-            res.status(404);
-            return res.json({
-                status: 404,
-                message: "Product not found"
-            });
-        }
+        if (!product)
+            return errorResponse(404, "Product not found");
         res.json(product);
     });
 
@@ -88,4 +78,10 @@ app.listen(3002);
             channel.publish(INVENTORY_EXCHANGE, "product.inventory-is-low", Buffer.from(JSON.stringify(product)));
         return product;
     }
+
+    function errorResponse(res, status, message) {
+        res.status(status);
+        return res.json({status, message});
+    }
 })();
+
