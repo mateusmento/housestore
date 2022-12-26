@@ -60,7 +60,7 @@ app.listen(3003);
     function calculatePrice(product) {
         const productPurchases = purchases.filter(p => p.product.id === product.id);
         product.price = averagePrice(product, productPurchases);
-        channel.publish(PRICING_EXCHANGE, "product.price-calculated", Buffer.from(JSON.stringify(product)));
+        publishInPricing("product.price-calculated", product);
     }
 
     function averagePrice(product, purchases) {
@@ -81,5 +81,9 @@ app.listen(3003);
             const content = JSON.parse(msg.content.toString());
             consume(content);
         }, { noAck: false });
+    }
+
+    function publishInPricing(route, content) {
+        return channel.publish(PRICING_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
     }
 })();
