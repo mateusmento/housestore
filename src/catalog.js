@@ -25,7 +25,7 @@ app.listen(3000);
             name: req.body.name
         };
         products.push(newProduct);
-        channel.publish(CATALOG_EXCHANGE, "product.registered", Buffer.from(JSON.stringify(newProduct)));
+        channel.publish(CATALOG_EXCHANGE, "product.registered", Buffer.from(JSON.stringify(newProduct)), { persistent: true });
         res.json(newProduct);
     });
 })();
