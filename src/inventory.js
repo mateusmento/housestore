@@ -15,7 +15,7 @@ app.listen(3002);
     const INVENTORY_EXCHANGE = "inventory";
     await channel.assertExchange(INVENTORY_EXCHANGE, "topic");
     await channel.assertExchange("sales", "topic");
-
+    await channel.assertExchange("purchasing", "topic");
     const products = [];
 
     consumeFrom("catalog", "product.registered", ({ id }) => {
