@@ -32,6 +32,18 @@ app.listen(3002);
 
     app.get("/products", (req, res) => res.json(products));
 
+    app.get("/products/:id", (req, res) => {
+        const product = products.find(p => p.id === +req.params.id);
+        if (!product) {
+            res.status(404);
+            return res.json({
+                status: 404,
+                message: "Product not found"
+            });
+        }
+        res.json(product);
+    });
+
     app.put("/products/:id/increase-quantity", (req, res) => {
         const product = increaseInventory(+req.params.id, req.body.amount);
         if (!product)
