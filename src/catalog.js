@@ -16,8 +16,20 @@ app.listen(3000);
     await channel.assertExchange(CATALOG_EXCHANGE, "topic");
 
     const products = [];
-
+    
     app.get("/products", (req, res) => res.json(products));
+
+    app.get("/products/:id", (req, res) => {
+        const product = products.find(p => p.id === +req.params.id);
+        if (!product) {
+            res.status(404);
+            return res.json({
+                status: 404,
+                message: "Product not found"
+            });
+        }
+        res.json(product);
+    });
 
     app.post("/products", async (req, res) => {
         const newProduct = {
