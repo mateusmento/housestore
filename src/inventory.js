@@ -78,7 +78,7 @@ app.listen(3002);
     }
 
     async function consumeFrom(exchange, route, consume) {
-        const { queue } = await channel.assertQueue("", { exclusive: true });
+        const { queue } = await channel.assertQueue("", { exclusive: true, durable: true });
         await channel.bindQueue(queue, exchange, route);
         channel.consume(queue, (msg) => {
             const content = JSON.parse(msg.content.toString());
