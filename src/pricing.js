@@ -36,6 +36,8 @@ app.listen(3003);
 
     app.get("/products", (req, res) => res.json(products));
 
+    app.get("/products/:id", (req, res) => res.json(products.find(p => p.id === +req.params.id)));
+
     app.put("/products/:id/profit-margin", (req, res) => {
         const product = findProductById(+req.params.id);
         product.profitMargin = req.body.profitMargin;
@@ -52,6 +54,25 @@ app.listen(3003);
 
     app.get("/purchases", (req, res) => res.json(purchases));
 
+    app.get("/products/:id/price/streaming", async (req, res) => {
+        res.set({
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive"
+        });
+
+        res.flushHeaders();
+
+        const disconnect = await consumeFrom("pricing", `product.${req.params.id}.price-calculated`, (msg) => {
+            res.write(`data: ${msg}\n\n`);
+        }, { parse: false });
+
+        res.on("close", () => {
+            disconnect();
+            res.end();
+        });
+    });
+
     function findProductById(id) {
         return products.find(p => p.id === id) || null;
     }
@@ -60,6 +81,7 @@ app.listen(3003);
         const productPurchases = purchases.filter(p => p.product.id === product.id);
         product.price = averagePrice(product, productPurchases);
         publishInPricing("product.price-calculated", product);
+        publishInPricing(`product.${product.id}.price-calculated`, product);
     }
 
     function averagePrice(product, purchases) {
@@ -73,13 +95,19 @@ app.listen(3003);
         return totalCost / totalQuantity;
     }
 
-    async function consumeFrom(exchange, route, consume) {
+    async function consumeFrom(exchange, route, consume, options) {
+        const { parse = true } = options || {};
         const { queue } = await channel.assertQueue("", { exclusive: true });
         await channel.bindQueue(queue, exchange, route);
-        channel.consume(queue, (msg) => {
-            const content = JSON.parse(msg.content.toString());
-            consume(content);
+        const { consumerTag } = await channel.consume(queue, (msg) => {
+            const content = msg.content.toString();
+            consume(parse ? JSON.parse(content) : content);
         }, { noAck: false });
+        return async () => {
+            await channel.cancel(consumerTag);
+            await channel.unbindQueue(queue, exchange, route);
+            await channel.deleteQueue(queue);
+        };
     }
 
     function publishInPricing(route, content) {
