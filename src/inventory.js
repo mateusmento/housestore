@@ -58,11 +58,31 @@ app.listen(3002);
         res.json(product);
     });
 
+    app.get("/products/:id/inventory/streaming", (req, res) => {
+        res.set({
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive"
+        });
+
+        res.flushHeaders();
+
+        const disconnect = consumeFrom("inventory", `product.${req.params.id}.inventory-adjusted`, (msg) => {
+            res.write(`data: ${msg}\n\n`);
+        }, { parse: false });
+
+        res.on("close", () => {
+            disconnect();
+            res.end();
+        });
+    });
+
     function increaseInventory(productId, amount) {
         const product = findProductById(productId);
         if (!product) return;
         product.quantity += amount;
         publishInInventory("product.inventory-adjusted", product);
+        publishInInventory(`product.${productId}.inventory-adjusted`, product);
         return product;
     }
 
@@ -71,6 +91,7 @@ app.listen(3002);
         if (!product) return;
         product.quantity -= amount;
         publishInInventory("product.inventory-adjusted", product);
+        publishInInventory(`product.${productId}.inventory-adjusted`, product);
         if (product.quantity === 0)
             publishInInventory("product.inventory-is-low", product);
         return product;
@@ -89,13 +110,19 @@ app.listen(3002);
         channel.publish(INVENTORY_EXCHANGE, route, Buffer.from(JSON.stringify(content)));
     }
 
-    async function consumeFrom(exchange, route, consume) {
-        const { queue } = await channel.assertQueue("", { exclusive: true, durable: true });
+    async function consumeFrom(exchange, route, consume, options) {
+        const { parse = true } = options || {};
+        const { queue } = await channel.assertQueue("", { exclusive: true });
         await channel.bindQueue(queue, exchange, route);
-        channel.consume(queue, (msg) => {
-            const content = JSON.parse(msg.content.toString());
-            consume(content);
+        const { consumerTag } = await channel.consume(queue, (msg) => {
+            const content = msg.content.toString();
+            consume(parse ? JSON.parse(content) : content);
         }, { noAck: false });
+        return async () => {
+            await channel.cancel(consumerTag);
+            await channel.unbindQueue(queue, exchange, route);
+            await channel.deleteQueue(queue);
+        };
     }
 })();
 
