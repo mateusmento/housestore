@@ -58,7 +58,7 @@ app.listen(3002);
         res.json(product);
     });
 
-    app.get("/products/:id/inventory/streaming", (req, res) => {
+    app.get("/products/:id/inventory/streaming", async (req, res) => {
         res.set({
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
@@ -67,7 +67,7 @@ app.listen(3002);
 
         res.flushHeaders();
 
-        const disconnect = consumeFrom("inventory", `product.${req.params.id}.inventory-adjusted`, (msg) => {
+        const disconnect = await consumeFrom("inventory", `product.${req.params.id}.inventory-adjusted`, (msg) => {
             res.write(`data: ${msg}\n\n`);
         }, { parse: false });
 
