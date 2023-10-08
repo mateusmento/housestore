@@ -1,0 +1,80 @@
+@catalog=http://localhost:3000
+@purchasing=http://localhost:3001
+@inventory=http://localhost:3002
+@pricing=http://localhost:3003
+@sales=http://localhost:3004
+
+###
+
+POST {{catalog}}/products
+Content-Type: application/json; charset=utf-8
+
+{ "name": "Product 1" }
+
+###
+
+POST {{purchasing}}/products/1/purchases
+Content-Type: application/json; charset=utf-8
+
+{ "quantity": 2, "cost": 20 }
+
+
+###
+
+GET {{sales}}/products
+
+###
+
+POST {{sales}}/sales
+Content-Type: application/json; charset=utf-8
+
+{ "productId": 1, "quantity": 2 }
+
+###
+
+GET {{sales}}/sales
+
+###
+
+GET {{inventory}}/products
+
+###
+
+PUT {{pricing}}/products/1/profit-margin
+Content-Type: application/json; charset=utf-8
+
+{ "profitMargin": 20 }
+
+###
+
+PUT {{pricing}}/products/1/taxes
+Content-Type: application/json; charset=utf-8
+
+{ "taxes": 10 }
+
+###
+
+PUT {{inventory}}/products/1/increase-quantity
+Content-Type: application/json; charset=utf-8
+
+{ "amount": 1 }
+
+###
+
+GET {{pricing}}/purchases
+
+###
+
+GET {{pricing}}/products
+
+###
+
+GET {{purchasing}}/products/1/purchases
+
+###
+
+GET {{catalog}}/products
+
+###
+
+GET {{purchasing}}/products
