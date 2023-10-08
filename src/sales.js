@@ -23,13 +23,13 @@ app.listen(3004);
     });
 
     consumeFrom("inventory", "product.inventory-adjusted", ({ id, quantity }) => {
-        let product = products.find(p => p.id === id);
+        let product = findProductById(id);
         if (!product) return;
         product.quantity = quantity;
     });
 
     consumeFrom("pricing", "product.price-calculated", ({ id, price }) => {
-        let product = products.find(p => p.id === id);
+        let product = findProductById(id);
         if (!product) return;
         product.price = price;
     });
@@ -39,7 +39,7 @@ app.listen(3004);
     app.get("/sales", (req, res) => res.json(sales));
 
     app.post("/sales", (req, res) => {
-        const product = products.find(p => p.id === req.body.productId);
+        const product = findProductById(req.body.productId);
         if (product.quantity < req.body.quantity) {
             res.status(400);
             return res.json({
@@ -49,13 +49,17 @@ app.listen(3004);
         }
         const newSale = {
             id: 1 + sales.reduce((id, s) => id + s.id, 0),
-            product: products.find(p => p.id === req.body.productId),
+            product,
             quantity: req.body.quantity
         };
         sales.push(newSale);
         publishInSales("product.sold", newSale);
         res.json(newSale);
     });
+
+    function findProductById(id) {
+        return products.find(p => p.id === id);
+    }
 
     async function consumeFrom(exchange, route, consume) {
         const { queue } = await channel.assertQueue("", { exclusive: true });
