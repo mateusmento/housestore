@@ -46,7 +46,7 @@ app.listen(3001);
                 message: "Product not found"
             });
         }
-        const purchase = purchaseProduct(product, req.body.quantity, req.body.cost);
+        const purchase = purchaseProduct(product, +req.body.quantity, +req.body.cost);
         res.json(purchase);
     });
 
